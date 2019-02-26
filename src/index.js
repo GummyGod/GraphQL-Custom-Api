@@ -86,7 +86,9 @@ const resolvers = {
                 return posts
             };
             return posts.filter( (post) => { 
-                return post.title.toLowerCase().includes(args.query.toLowerCase());
+                let titleMatches = post.title.toLowerCase().includes(args.query.toLowerCase());
+                let bodyMatches = post.body.toLowerCase().includes(args.query.toLowerCase());
+                return titleMatches || bodyMatches;
             });
         },
         me() {
