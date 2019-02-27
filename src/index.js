@@ -1,4 +1,5 @@
 import { GraphQLServer } from 'graphql-yoga';
+import { text } from 'body-parser';
 
 // Scalar GQL Types => String,  Bool, Int, Float, ID
 
@@ -49,6 +50,34 @@ const posts = [
     }
 ]
 
+//Dummy posts
+const comments = [
+    {
+        id: '1',
+        text: 'I dream so much And I just can\'t seem to find an answer to what I\'m looking for, in general. I can\'t keep living like this.',
+        author: '1',
+        post: '1'
+    },
+    {
+        id: '2',
+        text: 'It\'s breaking my heart, day by day I mean, who\'s to say... Who\'s to say you find an answer when living? What if you just die? What if life as we know it is all a game? What if we live for no reason? What if you just disappear when you die?',
+        author: '2',
+        post:'2'
+    },
+    {
+        id: '3',
+        text: 'Should I cling to life ? Or should I just kill myself? So many contradictions, contemplations It\'s getting harder and harder to mask my pain.',
+        author: '3',
+        post:'3'
+    },
+    {
+        id: '4',
+        text: 'I can\'t tell if I wanna live or if I wanna die. Please, save me.',
+        author:'1',
+        post:'1'
+    }
+    
+]
 // Type definitions(schema)
 const typeDefs = `
     type Query {
@@ -56,6 +85,7 @@ const typeDefs = `
         posts(query: String): [Post!]!
         me: User!
         post: Post!
+        comments: [Comment!]!
     }
 
     type User {
@@ -64,6 +94,7 @@ const typeDefs = `
          email: String!
          age: Int
          posts: [Post!]!
+         comments: [Comment!]!
     }
 
     type Post {
@@ -72,6 +103,14 @@ const typeDefs = `
         body: String!
         published: Boolean!
         author: User!
+        comments: [Comment!]!
+    }
+    
+    type Comment {
+        id: ID!
+        text: String!
+        author: User!
+        post: Post!
     }
 `
 
@@ -111,6 +150,9 @@ const resolvers = {
                 body: 'It is awesome, you should use it!',
                 published: true
             }
+        },
+        comments(parent,args,ctx,info) {
+            return comments;
         }
         
     },
@@ -119,6 +161,11 @@ const resolvers = {
             return users.find((user) => {
                 return user.id === parent.author
             });
+        },
+        comments(parent,args,ctx,info) {
+            return comments.filter((comment) => {
+                return comment.post === parent.id;
+            })
         }   
     },
     User: {
@@ -126,7 +173,25 @@ const resolvers = {
             return posts.filter((post) => {
                 return post.author === parent.id;
             });
+        },
+        comments(parent,args,ctx,info) {
+            console.log(parent);
+            return comments.filter((comment) => {
+                return comment.author === parent.id;
+            })
         } 
+    },
+    Comment: {
+        author(parent,args,ctx,info) {
+            return users.find((user) => {
+                return user.id === parent.author;
+            });
+        },
+        post(parent,args,ctx,info) {
+            return posts.find((post) => {
+                return post.id === parent.post;
+            })
+        }
     }
 };
 
