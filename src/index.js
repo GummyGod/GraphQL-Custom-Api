@@ -1,5 +1,6 @@
 import { GraphQLServer } from 'graphql-yoga';
 import { text } from 'body-parser';
+import uuidv4 from 'uuid/v4';
 
 // Scalar GQL Types => String,  Bool, Int, Float, ID
 
@@ -88,6 +89,10 @@ const typeDefs = `
         comments: [Comment!]!
     }
 
+    type Mutation {
+        createUser(name: String!, email: String!, age: Int): User!
+    }
+
     type User {
          id: ID!
          name: String!
@@ -156,6 +161,25 @@ const resolvers = {
         }
         
     },
+    Mutation: {
+        createUser(parent,args,ctx,info) {
+            const emailTaken = users.some((user) => user.email === args.email);
+            
+            if (emailTaken) throw new Error('Email is already taken! Please chose another!');
+
+            const user = {
+                id: uuidv4(),
+                name: args.name,
+                email: args.email,
+                age: args.age
+            }
+
+            users.push(user);
+
+            return user
+
+        }
+    },
     Post: {
         author(parent,args,ctx,info) {
             return users.find((user) => {
@@ -175,7 +199,6 @@ const resolvers = {
             });
         },
         comments(parent,args,ctx,info) {
-            console.log(parent);
             return comments.filter((comment) => {
                 return comment.author === parent.id;
             })
