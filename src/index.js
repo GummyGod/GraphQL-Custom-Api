@@ -5,7 +5,7 @@ import uuidv4 from 'uuid/v4';
 // Scalar GQL Types => String,  Bool, Int, Float, ID
 
 // Demo user data 
-const users = [
+let users = [
     {
     id: '1',
     name: 'Christian',
@@ -27,7 +27,7 @@ const users = [
 ];
 
 // Demo posts
-const posts = [
+let posts = [
     {
         id: '1',
         title: 'Whatever1',
@@ -52,7 +52,7 @@ const posts = [
 ]
 
 //Dummy posts
-const comments = [
+let comments = [
     {
         id: '1',
         text: 'I dream so much And I just can\'t seem to find an answer to what I\'m looking for, in general. I can\'t keep living like this.',
@@ -91,8 +91,11 @@ const typeDefs = `
 
     type Mutation {
         createUser(data: CreateUserInput): User!
+        deleteUser(id: ID!): User!
         createPost(data: CreatePostInput): Post!
+        deletePost(id: ID!): Post!
         createComment(data: CreateCommentInput): Comment!
+        deleteComment(id: ID!): Comment!
     }
 
     input CreateUserInput {
@@ -198,6 +201,30 @@ const resolvers = {
             return user
 
         },
+        deleteUser(parents,args,ctx,info) {
+            const userIndex = users.findIndex((user) => user.id === args.id);
+
+            if (userIndex === -1 ) {
+                throw new Error('User not found');
+            }
+
+            const deletedUsers = users.splice(userIndex, 1);
+
+            posts = posts.filter((post) => {
+                const match = post.author === args.id;
+
+                if (match) {
+                    //delete all the comments on user posts
+                    comments = comments.filter((comment) => comment.post !== post.id)
+                }
+                
+                return !match 
+            });
+            //delete all the comments user created
+            comments = comments.filter((comment) => comment.author !== args.id)
+
+            return deletedUsers[0];
+        },
         createPost(parent,args,ctx,info) {
             const userExists = users.some((user) => user.id === args.data.author);
             
@@ -211,6 +238,18 @@ const resolvers = {
             posts.push(post);
 
             return post;
+        },
+        deletePost(parent,args,ctx,info) {
+            const postIndex = posts.findIndex((post) => post.id === args.id);
+
+            if(postIndex === -1) throw new Error('Post not found');
+
+            const deletedPosts = posts.splice(postIndex, 1);
+
+            comments = comments.filter((comment) => comment.post !== args.id);
+
+            return deletedPosts[0];
+
         },
         createComment(parent,args,ctx,info) {
             const userExists = users.some((user) => user.id === args.data.author);
@@ -227,6 +266,13 @@ const resolvers = {
 
             return comment;
 
+        },
+        deleteComment(parent,args,ctx,info) {
+            const commentIndex = comments.findIndex((comment) => comment.id === args.id);
+    
+            const deletedComment = comments.splice(commentIndex, 1);
+
+            return deletedComment[0];
         }
     },
     Post: {
