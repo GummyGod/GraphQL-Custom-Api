@@ -1,6 +1,6 @@
 const Post = {
     author(parent,args,{ db },info) {
-        return udb.users.find((user) => {
+        return db.users.find((user) => {
             return user.id === parent.author
         });
     },

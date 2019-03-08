@@ -14,7 +14,7 @@ const Mutation = {
 
         db.users.push(user);
 
-        return user
+        return user;
 
     },
     deleteUser(parents,args,{ db },info) {
@@ -31,15 +31,39 @@ const Mutation = {
 
             if (match) {
                 //delete all the comments on user posts
-                db.comments = db.comments.filter((comment) => comment.post !== post.id)
+                db.comments = db.comments.filter((comment) => comment.post !== post.id);
             }
             
-            return !match 
+            return !match ;
         });
         //delete all the comments user created
-        db.comments = db.comments.filter((comment) => comment.author !== args.id)
+        db.comments = db.comments.filter((comment) => comment.author !== args.id);
 
         return deletedUsers[0];
+    },
+    updateUser(parent,args, { db }, info) {
+        const  {id, data} = args;
+        const user = db.users.find(user => user.id === id);
+
+        if (!user) throw new Error('User not found!');
+
+        if(typeof data.email === 'string') {
+            const emailTaken = db.users.some((user) => user.email === data.email);
+
+            if (emailTaken) throw new Error ('Email in use');
+            
+            user.email = data.email;
+        }
+
+        if(typeof data.name === 'string') {
+            user.name = data.name;
+        }
+
+        if(typeof data.age !== 'undefined') {
+          user.age = data.age  
+        }
+
+        return user;
     },
     createPost(parent,args,{ db },info) {
         const userExists = db.users.some((user) => user.id === args.data.author);
